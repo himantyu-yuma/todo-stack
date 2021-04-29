@@ -1,10 +1,11 @@
 import edit from '@/pages/edit.vue';
-
+import date from '@/plugins/filter';
 import { createLocalVue, shallowMount, RouterLinkStub } from '@vue/test-utils';
 import flushPromises from 'flush-promises';
-import date from '@/plugins/filter';
+
 describe('編集ページのテスト', () => {
   let wrapper;
+
   beforeEach(async () => {
     const localVue = createLocalVue();
     localVue.filter('date', date);
@@ -13,11 +14,11 @@ describe('編集ページのテスト', () => {
         NuxtLink: RouterLinkStub
       },
       mocks: {
+        localVue,
         $config: { backendScheme: 'http', backendHost: 'localhost' },
         $axios: {
           get: () => {
             return new Promise((resolve) => {
-              // if (mockError) throw Error('Mock error')
               resolve({
                 data: [
                   {
@@ -44,12 +45,12 @@ describe('編集ページのテスト', () => {
               });
             });
           }
-        },
-        localVue
+        }
       }
     });
     await flushPromises();
   });
+
   test('データ取れてるかな？？？？', () => {
     expect(wrapper.vm.todos).toMatchObject([
       {
@@ -72,25 +73,13 @@ describe('編集ページのテスト', () => {
         updated_at: '2021-04-24T14:04:24.091000Z',
         _id: 'fdsaf'
       }
-    ]
-    );
+    ]);
   });
 
-  test('編集押したときitemに入るかな？その1', () => {
-    wrapper.find('tbody tr:nth-child(1) button:nth-child(1)').trigger('click');
-    expect(wrapper.vm.item).toMatchObject(wrapper.vm.todos[0]);
-  });
-
-  test('編集押したときitemに入るかな？その2', () => {
-    wrapper.find('tbody tr:nth-child(2) button:nth-child(1)').trigger('click');
-    expect(wrapper.vm.item).toMatchObject(wrapper.vm.todos[1]);
-  });
-
-  test('編集押したとき表示はうまく行ってるかな？', async () => {
-    await wrapper.find('tbody tr:nth-child(1) button:nth-child(1)').trigger('click');
-    console.log(wrapper.find('#name').element);
-    expect(wrapper.find('#name').element.value).toBe(wrapper.vm.todos[0].name);
-    expect(wrapper.find('#hours').element.value).toBe(wrapper.vm.todos[0].hours.toString());
-    expect(wrapper.find('#limit').element.value).toBe(wrapper.vm.todos[0].limit);
+  test.each([0, 1])('編集押したときフォームにちゃんと入るかな？', async (index) => {
+    await wrapper.find(`tbody tr:nth-child(${index + 1}) button:nth-child(1)`).trigger('click');
+    expect(wrapper.find('#name').element.value).toBe(wrapper.vm.todos[index].name);
+    expect(wrapper.find('#hours').element.value).toBe(wrapper.vm.todos[index].hours.toString());
+    expect(wrapper.find('#limit').element.value).toBe(wrapper.vm.todos[index].limit);
   });
 });
