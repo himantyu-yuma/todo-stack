@@ -16,6 +16,9 @@
           <th class="limit">
             期限
           </th>
+          <th class="score">
+            スコア
+          </th>
           <th class="buttons" />
         </tr>
       </thead>
@@ -26,6 +29,9 @@
             {{ todo.hours }}
           </td>
           <td>{{ todo.limit | date }}</td>
+          <td>
+            <Graph :chart-data="generateChartData[index]" :options="generateChartDataOptions[index]" :width="300" :height="35" />
+          </td>
           <td>
             <button class="btn btn-sm btn-info btn-block" @click="completeTask(index)">
               完了
@@ -43,6 +49,62 @@ export default {
     return {
       todos: []
     };
+  },
+  computed: {
+    calcPriorityPercentages () {
+      if (this.todos.length === 1) {
+        return [100];
+      } else {
+        const min = this.todos.reduce((min, task) => Math.min(min, task.score), Number.POSITIVE_INFINITY);
+        const max = this.todos.reduce((max, task) => Math.max(max, task.score), Number.NEGATIVE_INFINITY);
+        return this.todos.map(task => (task.score - min + 1) / (max - min + 1) * 100);
+      }
+    },
+    generateChartData () {
+      const self = this;
+      return this.todos.map((task, index) => ({
+        datasets: [{
+          label: 'score',
+          data: [self.calcPriorityPercentages[index]],
+          backgroundColor: ['rgba(230, 52, 93, 1)']
+        }]
+      }));
+    },
+    generateChartDataOptions () {
+      return this.todos.map((task) => {
+        return {
+          responsive: false,
+          legend: {
+            display: false
+          },
+          scales: {
+            xAxes: [{
+              gridLines: {
+                display: false,
+                drawBorder: false
+              },
+              ticks: {
+                display: false,
+                min: 0,
+                max: 100
+              }
+            }],
+            yAxes: [{
+              gridLines: {
+                display: false,
+                drawBorder: false
+              },
+              ticks: {
+                display: false
+              }
+            }]
+          },
+          tooltips: {
+            enabled: false
+          }
+        };
+      });
+    }
   },
   mounted () {
     this.fetchTasks();
@@ -98,5 +160,9 @@ export default {
 
 .buttons {
   width: 7rem;
+}
+
+.score{
+  width: 8rem;
 }
 </style>
